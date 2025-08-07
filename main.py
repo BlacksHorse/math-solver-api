@@ -1,11 +1,23 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware   # <-- NEW
 from pydantic import BaseModel
 from sympy import symbols, Eq, solve, sympify
 import re, os, openai
 
 app = FastAPI()
 
-# ---- helpers -------------------------------------------------
+# ───────────────────────────── CORS ─────────────────────────────
+# Allow any website or WebView to call your API while testing.
+# You can tighten this later (e.g. allow_origins=["https://your-domain.com"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# ────────────────────────────────────────────────────────────────
+
+# ─── helpers ────────────────────────────────────────────────────
 def is_equation(q: str) -> bool:
     return "=" in q
 
@@ -29,10 +41,11 @@ def gpt_fallback(q: str):
         messages=[
             {"role":"system","content":"You are a WAEC maths tutor."},
             {"role":"user","content":f"Solve step-by-step: {q}"}
-        ])
+        ]
+    )
     return chat.choices[0].message.content.strip()
 
-# ---- API route -----------------------------------------------
+# ─── API route ──────────────────────────────────────────────────
 class Q(BaseModel):
     question: str
 
